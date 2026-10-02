@@ -1,0 +1,28 @@
+name: Release
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  release:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: kaji-labs/pr-version-bot@v1.1.2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          version-file: VERSION.md
+          changelog-file: CHANGELOG.md
+          target-branch: master
+          default-bump: none
