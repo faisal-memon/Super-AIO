@@ -1,12 +1,14 @@
+# -----------------------------------------------------------------------------
 # Common configuration
+# -----------------------------------------------------------------------------
 REPO_DIR ?= $(CURDIR)
-CONFIG_BACKUP_DIR ?= /var/backups/super-aio
-POWER_DATA ?= $(REPO_DIR)/release/saio/osd/data.ini
 
 # -----------------------------------------------------------------------------
 # Install
 # -----------------------------------------------------------------------------
 .PHONY: install systemd-install config-install
+
+CONFIG_BACKUP_DIR ?= /var/backups/super-aio
 
 install: systemd-install config-install
 	@echo 'Installed Super-AIO systemd integration and boot configuration.'
@@ -74,6 +76,8 @@ systemd-status:
 # Tests and diagnostics
 # -----------------------------------------------------------------------------
 .PHONY: check-runtime show-power monitor-power
+
+POWER_DATA ?= $(REPO_DIR)/release/saio/osd/data.ini
 
 check-runtime:
 	@set -eu; \
