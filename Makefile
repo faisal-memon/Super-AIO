@@ -1,4 +1,4 @@
-.PHONY: check-runtime config-install systemd-install systemd-uninstall systemd-restart systemd-start systemd-stop systemd-status show-power monitor-power
+.PHONY: check-runtime install config-install systemd-install systemd-uninstall systemd-restart systemd-start systemd-stop systemd-status show-power monitor-power
 
 # -----------------------------------------------------------------------------
 # Common configuration
@@ -11,6 +11,9 @@ CONFIG_BACKUP_DIR ?= /var/backups/super-aio
 # -----------------------------------------------------------------------------
 # Shared data file written by the Super-AIO monitor.
 POWER_DATA ?= $(REPO_DIR)/release/saio/osd/data.ini
+
+install: systemd-install config-install
+	@echo 'Installed Super-AIO systemd integration and boot configuration.'
 
 show-power:
 	@test -f "$(POWER_DATA)" || { echo 'ERROR: OSD data file not found: $(POWER_DATA)'; exit 1; }
