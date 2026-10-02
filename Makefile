@@ -54,6 +54,20 @@ uninstall-config:
 	@echo 'Restored the backed-up /boot/config-saio.txt.'
 
 # -----------------------------------------------------------------------------
+# Migration cleanup
+# -----------------------------------------------------------------------------
+.PHONY: remove-cron
+
+TARGET_USER ?= pi
+
+remove-cron:
+	@test "$$(id -u)" -eq 0 || { echo 'ERROR: remove-cron must run as root (try sudo make remove-cron)'; exit 1; }
+	install -d -m 700 "$(CONFIG_BACKUP_DIR)"
+	if [ ! -e "$(CONFIG_BACKUP_DIR)/$(TARGET_USER).cron.before-systemd" ]; then crontab -u "$(TARGET_USER)" -l 2>/dev/null > "$(CONFIG_BACKUP_DIR)/$(TARGET_USER).cron.before-systemd" || :; fi
+	tmp_cron=$$(mktemp); trap 'rm -f "$$tmp_cron"' EXIT; crontab -u "$(TARGET_USER)" -l 2>/dev/null | grep -v -E 'saio-osd.py|Super-AIO managed runtime' > "$$tmp_cron" || :; crontab -u "$(TARGET_USER)" "$$tmp_cron"
+	@echo 'Removed the legacy Super-AIO cron entry; other cron jobs were preserved.'
+
+# -----------------------------------------------------------------------------
 # Service lifecycle
 # -----------------------------------------------------------------------------
 .PHONY: start-systemd stop-systemd restart-systemd status-systemd
