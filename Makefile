@@ -1,9 +1,17 @@
 .PHONY: check-runtime install-runtime uninstall-runtime dry-run install-systemd uninstall-systemd restart-runtime status-runtime show-power monitor-power
 
+# -----------------------------------------------------------------------------
+# Common configuration
+# -----------------------------------------------------------------------------
 REPO_DIR ?= $(CURDIR)
 TARGET_USER ?= pi
 BACKUP_DIR ?= /var/backups/super-aio
 CRON_MARKER := \# Super-AIO managed runtime
+
+# -----------------------------------------------------------------------------
+# Power monitoring
+# -----------------------------------------------------------------------------
+# Shared data file written by the Super-AIO monitor.
 POWER_DATA ?= $(REPO_DIR)/release/saio/osd/data.ini
 
 show-power:
@@ -14,6 +22,9 @@ monitor-power:
 	@test -f "$(POWER_DATA)" || { echo 'ERROR: OSD data file not found: $(POWER_DATA)'; exit 1; }
 	@while true; do clear; date; awk -F ' *= *' '/^(voltage|current|temperature) *=/ { printf "%s: %s\n", $$1, $$2 }' "$(POWER_DATA)"; sleep 1; done
 
+# -----------------------------------------------------------------------------
+# Legacy runtime installation (cron and RetroPie startup files)
+# -----------------------------------------------------------------------------
 dry-run:
 	@echo "Would install Super-AIO from: $(REPO_DIR)"
 	@echo "Would configure $(TARGET_USER)'s @reboot monitor"
@@ -21,6 +32,9 @@ dry-run:
 	@echo "Would install: /opt/retropie/configs/all/autostart.sh"
 	@echo "Would install: /boot/config-saio.txt"
 
+# -----------------------------------------------------------------------------
+# systemd runtime management
+# -----------------------------------------------------------------------------
 install-systemd:
 	@test "$$(id -u)" -eq 0 || { echo 'ERROR: install-systemd must run as root (try sudo make install-systemd)'; exit 1; }
 	test -f "$(REPO_DIR)/release/saio/super-aio.service.in" || { echo 'ERROR: service template not found'; exit 1; }
@@ -43,6 +57,9 @@ restart-runtime:
 status-runtime:
 	@systemctl --no-pager --full status super-aio.service
 
+# -----------------------------------------------------------------------------
+# Legacy runtime install/uninstall
+# -----------------------------------------------------------------------------
 install-runtime:
 	@test "$$(id -u)" -eq 0 || { echo 'ERROR: install-runtime must run as root (try sudo make install-runtime)'; exit 1; }
 	@test -f "$(REPO_DIR)/release/saio/autostart.sh" || { echo 'ERROR: release/saio/autostart.sh not found'; exit 1; }
@@ -70,6 +87,9 @@ uninstall-runtime:
 	if [ -f "$(BACKUP_DIR)/$(TARGET_USER).cron" ]; then crontab -u "$(TARGET_USER)" "$(BACKUP_DIR)/$(TARGET_USER).cron"; fi
 	@echo 'Restored the backed-up Super-AIO runtime configuration. Stop the running monitor separately if needed.'
 
+# -----------------------------------------------------------------------------
+# Runtime health check
+# -----------------------------------------------------------------------------
 # Verify that the Super-AIO monitor and its native OSD child are running.
 # Run this target on the Raspberry Pi; it is intentionally read-only.
 check-runtime:
