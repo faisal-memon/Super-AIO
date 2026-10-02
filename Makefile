@@ -1,9 +1,18 @@
-.PHONY: check-runtime install-runtime uninstall-runtime dry-run install-systemd uninstall-systemd restart-runtime status-runtime
+.PHONY: check-runtime install-runtime uninstall-runtime dry-run install-systemd uninstall-systemd restart-runtime status-runtime show-power monitor-power
 
 REPO_DIR ?= $(CURDIR)
 TARGET_USER ?= pi
 BACKUP_DIR ?= /var/backups/super-aio
 CRON_MARKER := \# Super-AIO managed runtime
+POWER_DATA ?= $(REPO_DIR)/release/saio/osd/data.ini
+
+show-power:
+	@test -f "$(POWER_DATA)" || { echo 'ERROR: OSD data file not found: $(POWER_DATA)'; exit 1; }
+	@awk -F ' *= *' '/^(voltage|current|temperature) *=/ { printf "%s: %s\n", $$1, $$2 }' "$(POWER_DATA)"
+
+monitor-power:
+	@test -f "$(POWER_DATA)" || { echo 'ERROR: OSD data file not found: $(POWER_DATA)'; exit 1; }
+	@while true; do clear; date; awk -F ' *= *' '/^(voltage|current|temperature) *=/ { printf "%s: %s\n", $$1, $$2 }' "$(POWER_DATA)"; sleep 1; done
 
 dry-run:
 	@echo "Would install Super-AIO from: $(REPO_DIR)"

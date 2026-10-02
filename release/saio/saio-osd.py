@@ -110,6 +110,7 @@ configOSD.add_section('protocol')
 configOSD.set('protocol', 'version', 1)
 configOSD.add_section('data')
 configOSD.set('data', 'voltage', '-.--')
+configOSD.set('data', 'current', '-.--')
 configOSD.set('data', 'temperature', '--.-')
 configOSD.set('data', 'showdebug', 1)
 configOSD.set('data', 'showwifi', 0)
@@ -335,6 +336,7 @@ def doShutdown():
 def createINI(volt, curr, temp, debug, wifi, mute, file):
   #configOSD.set('data', 'voltage', '{0:.2f}'.format(volt/100.00))
   configOSD.set('data', 'voltage', volt)
+  configOSD.set('data', 'current', curr)
   configOSD.set('data', 'temperature', temp)
   configOSD.set('data', 'showdebug', debug)
   configOSD.set('data', 'showwifi', wifi)
@@ -373,12 +375,13 @@ try:
       checkShdn()
     
     volt = readVoltage()
+    curr = readCurrent()
     temp = checkTemperature()
     debug = readModeDebug()
     wifi = readModeWifi()
     mute = readModeMute()    
 
-    createINI(volt, 0, temp, debug, wifi, mute, ini_data_file)
+    createINI(volt, curr, temp, debug, wifi, mute, ini_data_file)
     
     time.sleep(loop_interval_seconds)
   
