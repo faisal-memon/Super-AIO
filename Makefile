@@ -1,4 +1,4 @@
-.PHONY: check-runtime install config-install systemd-install systemd-uninstall systemd-restart systemd-start systemd-stop systemd-status show-power monitor-power
+.PHONY: check-runtime install uninstall config-install config-uninstall systemd-install systemd-uninstall systemd-restart systemd-start systemd-stop systemd-status show-power monitor-power
 
 # -----------------------------------------------------------------------------
 # Common configuration
@@ -14,6 +14,9 @@ POWER_DATA ?= $(REPO_DIR)/release/saio/osd/data.ini
 
 install: systemd-install config-install
 	@echo 'Installed Super-AIO systemd integration and boot configuration.'
+
+uninstall: systemd-uninstall config-uninstall
+	@echo 'Removed Super-AIO systemd integration and restored boot configuration.'
 
 show-power:
 	@test -f "$(POWER_DATA)" || { echo 'ERROR: OSD data file not found: $(POWER_DATA)'; exit 1; }
@@ -35,6 +38,12 @@ config-install:
 	install -m 644 /tmp/config-saio.txt /boot/config-saio.txt
 	rm -f /tmp/config-saio.txt
 	@echo 'Installed /boot/config-saio.txt from the repository template.'
+
+config-uninstall:
+	@test "$$(id -u)" -eq 0 || { echo 'ERROR: config-uninstall must run as root (try sudo make config-uninstall)'; exit 1; }
+	@test -f "$(CONFIG_BACKUP_DIR)/config-saio.txt" || { echo 'ERROR: no backed-up config-saio.txt found'; exit 1; }
+	install -m 644 "$(CONFIG_BACKUP_DIR)/config-saio.txt" /boot/config-saio.txt
+	@echo 'Restored the backed-up /boot/config-saio.txt.'
 
 # -----------------------------------------------------------------------------
 # systemd runtime management
