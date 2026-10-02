@@ -1,4 +1,4 @@
-.PHONY: check-runtime install-runtime uninstall-runtime dry-run
+.PHONY: check-runtime install-runtime uninstall-runtime dry-run install-systemd uninstall-systemd restart-runtime status-runtime
 
 REPO_DIR ?= $(CURDIR)
 TARGET_USER ?= pi
@@ -11,6 +11,28 @@ dry-run:
 	@echo "Would back up runtime files to: $(BACKUP_DIR)"
 	@echo "Would install: /opt/retropie/configs/all/autostart.sh"
 	@echo "Would install: /boot/config-saio.txt"
+
+install-systemd:
+	@test "$$(id -u)" -eq 0 || { echo 'ERROR: install-systemd must run as root (try sudo make install-systemd)'; exit 1; }
+	test -f "$(REPO_DIR)/release/saio/super-aio.service.in" || { echo 'ERROR: service template not found'; exit 1; }
+	sed 's#__REPO_DIR__#$(REPO_DIR)#g' "$(REPO_DIR)/release/saio/super-aio.service.in" > /tmp/super-aio.service
+	install -m 644 /tmp/super-aio.service /etc/systemd/system/super-aio.service
+	rm -f /tmp/super-aio.service
+	systemctl daemon-reload
+	@echo 'Installed super-aio.service. Cron remains active until an explicit cutover.'
+
+uninstall-systemd:
+	@test "$$(id -u)" -eq 0 || { echo 'ERROR: uninstall-systemd must run as root (try sudo make uninstall-systemd)'; exit 1; }
+	systemctl disable --now super-aio.service 2>/dev/null || true
+	rm -f /etc/systemd/system/super-aio.service
+	systemctl daemon-reload
+	@echo 'Removed super-aio.service.'
+
+restart-runtime:
+	@if systemctl is-active --quiet super-aio.service; then systemctl restart super-aio.service; else echo 'ERROR: super-aio.service is not active'; exit 1; fi
+
+status-runtime:
+	@systemctl --no-pager --full status super-aio.service
 
 install-runtime:
 	@test "$$(id -u)" -eq 0 || { echo 'ERROR: install-runtime must run as root (try sudo make install-runtime)'; exit 1; }
