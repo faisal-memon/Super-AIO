@@ -316,6 +316,9 @@ def checkTemperature():
 
 # Do a shutdown
 def doShutdown():
+  os.system("sudo killall emulationstation")
+  os.system("sudo sleep 3")
+  os.system("/usr/local/bin/nextcloud.sh")
   os.system("sudo shutdown -h now")
   try:
     sys.stdout.close()
