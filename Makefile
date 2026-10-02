@@ -1,9 +1,10 @@
-.PHONY: check-runtime systemd-install systemd-uninstall systemd-restart systemd-start systemd-stop systemd-status show-power monitor-power
+.PHONY: check-runtime config-install systemd-install systemd-uninstall systemd-restart systemd-start systemd-stop systemd-status show-power monitor-power
 
 # -----------------------------------------------------------------------------
 # Common configuration
 # -----------------------------------------------------------------------------
 REPO_DIR ?= $(CURDIR)
+CONFIG_BACKUP_DIR ?= /var/backups/super-aio
 
 # -----------------------------------------------------------------------------
 # Power monitoring
@@ -18,6 +19,19 @@ show-power:
 monitor-power:
 	@test -f "$(POWER_DATA)" || { echo 'ERROR: OSD data file not found: $(POWER_DATA)'; exit 1; }
 	@while true; do date; awk -F ' *= *' '/^(voltage|current|temperature) *=/ { printf "%s: %s\n", $$1, $$2 }' "$(POWER_DATA)"; echo; sleep 1; done
+
+# -----------------------------------------------------------------------------
+# Boot configuration
+# -----------------------------------------------------------------------------
+config-install:
+	@test "$$(id -u)" -eq 0 || { echo 'ERROR: config-install must run as root (try sudo make config-install)'; exit 1; }
+	test -f "$(REPO_DIR)/release/saio/config-saio.txt" || { echo 'ERROR: config-saio.txt template not found'; exit 1; }
+	install -d -m 700 "$(CONFIG_BACKUP_DIR)"
+	if [ -e /boot/config-saio.txt ] && [ ! -e "$(CONFIG_BACKUP_DIR)/config-saio.txt" ]; then cp -p /boot/config-saio.txt "$(CONFIG_BACKUP_DIR)/config-saio.txt"; fi
+	sed 's#/home/pi/Super-AIO#$(REPO_DIR)#g' "$(REPO_DIR)/release/saio/config-saio.txt" > /tmp/config-saio.txt
+	install -m 644 /tmp/config-saio.txt /boot/config-saio.txt
+	rm -f /tmp/config-saio.txt
+	@echo 'Installed /boot/config-saio.txt from the repository template.'
 
 # -----------------------------------------------------------------------------
 # systemd runtime management
