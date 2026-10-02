@@ -1,29 +1,20 @@
-.PHONY: check-runtime systemd-install systemd-uninstall systemd-restart systemd-start systemd-stop systemd-status show-power monitor-power
-
 # -----------------------------------------------------------------------------
 # Common configuration
 # -----------------------------------------------------------------------------
 REPO_DIR ?= $(CURDIR)
 
 # -----------------------------------------------------------------------------
-# Power monitoring
+# Install
 # -----------------------------------------------------------------------------
-# Shared data file written by the Super-AIO monitor.
-POWER_DATA ?= $(REPO_DIR)/release/saio/osd/data.ini
+.PHONY: install install-systemd install-config
 
-show-power:
-	@test -f "$(POWER_DATA)" || { echo 'ERROR: OSD data file not found: $(POWER_DATA)'; exit 1; }
-	@awk -F ' *= *' '/^(voltage|current|temperature) *=/ { printf "%s: %s\n", $$1, $$2 }' "$(POWER_DATA)"
+CONFIG_BACKUP_DIR ?= /var/backups/super-aio
 
-monitor-power:
-	@test -f "$(POWER_DATA)" || { echo 'ERROR: OSD data file not found: $(POWER_DATA)'; exit 1; }
-	@while true; do date; awk -F ' *= *' '/^(voltage|current|temperature) *=/ { printf "%s: %s\n", $$1, $$2 }' "$(POWER_DATA)"; echo; sleep 1; done
+install: install-systemd install-config
+	@echo 'Installed Super-AIO systemd integration and boot configuration.'
 
-# -----------------------------------------------------------------------------
-# systemd runtime management
-# -----------------------------------------------------------------------------
-systemd-install:
-	@test "$$(id -u)" -eq 0 || { echo 'ERROR: systemd-install must run as root (try sudo make systemd-install)'; exit 1; }
+install-systemd:
+	@test "$$(id -u)" -eq 0 || { echo 'ERROR: install-systemd must run as root (try sudo make install-systemd)'; exit 1; }
 	test -f "$(REPO_DIR)/release/saio/super-aio.service.in" || { echo 'ERROR: service template not found'; exit 1; }
 	sed 's#__REPO_DIR__#$(REPO_DIR)#g' "$(REPO_DIR)/release/saio/super-aio.service.in" > /tmp/super-aio.service
 	install -m 644 /tmp/super-aio.service /etc/systemd/system/super-aio.service
@@ -31,32 +22,63 @@ systemd-install:
 	systemctl daemon-reload
 	@echo 'Installed super-aio.service. Enable it with: sudo systemctl enable --now super-aio.service'
 
-systemd-uninstall:
-	@test "$$(id -u)" -eq 0 || { echo 'ERROR: systemd-uninstall must run as root (try sudo make systemd-uninstall)'; exit 1; }
+install-config:
+	@test "$$(id -u)" -eq 0 || { echo 'ERROR: install-config must run as root (try sudo make install-config)'; exit 1; }
+	test -f "$(REPO_DIR)/release/saio/config-saio.txt" || { echo 'ERROR: config-saio.txt template not found'; exit 1; }
+	install -d -m 700 "$(CONFIG_BACKUP_DIR)"
+	if [ -e /boot/config-saio.txt ] && [ ! -e "$(CONFIG_BACKUP_DIR)/config-saio.txt" ]; then cp -p /boot/config-saio.txt "$(CONFIG_BACKUP_DIR)/config-saio.txt"; fi
+	sed 's#/home/pi/Super-AIO#$(REPO_DIR)#g' "$(REPO_DIR)/release/saio/config-saio.txt" > /tmp/config-saio.txt
+	install -m 644 /tmp/config-saio.txt /boot/config-saio.txt
+	rm -f /tmp/config-saio.txt
+	@echo 'Installed /boot/config-saio.txt from the repository template.'
+
+# -----------------------------------------------------------------------------
+# Uninstall
+# -----------------------------------------------------------------------------
+.PHONY: uninstall uninstall-systemd uninstall-config
+
+uninstall: uninstall-systemd uninstall-config
+	@echo 'Removed Super-AIO systemd integration and restored boot configuration.'
+
+uninstall-systemd:
+	@test "$$(id -u)" -eq 0 || { echo 'ERROR: uninstall-systemd must run as root (try sudo make uninstall-systemd)'; exit 1; }
 	systemctl disable --now super-aio.service 2>/dev/null || true
 	rm -f /etc/systemd/system/super-aio.service
 	systemctl daemon-reload
 	@echo 'Removed super-aio.service.'
 
-systemd-restart:
-	@if systemctl is-active --quiet super-aio.service; then systemctl restart super-aio.service; else echo 'ERROR: super-aio.service is not active'; exit 1; fi
+uninstall-config:
+	@test "$$(id -u)" -eq 0 || { echo 'ERROR: uninstall-config must run as root (try sudo make uninstall-config)'; exit 1; }
+	@test -f "$(CONFIG_BACKUP_DIR)/config-saio.txt" || { echo 'ERROR: no backed-up config-saio.txt found'; exit 1; }
+	install -m 644 "$(CONFIG_BACKUP_DIR)/config-saio.txt" /boot/config-saio.txt
+	@echo 'Restored the backed-up /boot/config-saio.txt.'
 
-systemd-stop:
-	@test "$$(id -u)" -eq 0 || { echo 'ERROR: systemd-stop must run as root (try sudo make systemd-stop)'; exit 1; }
-	systemctl stop super-aio.service
+# -----------------------------------------------------------------------------
+# Service lifecycle
+# -----------------------------------------------------------------------------
+.PHONY: start-systemd stop-systemd restart-systemd status-systemd
 
-systemd-start:
-	@test "$$(id -u)" -eq 0 || { echo 'ERROR: systemd-start must run as root (try sudo make systemd-start)'; exit 1; }
+start-systemd:
+	@test "$$(id -u)" -eq 0 || { echo 'ERROR: start-systemd must run as root (try sudo make start-systemd)'; exit 1; }
 	systemctl start super-aio.service
 
-systemd-status:
+stop-systemd:
+	@test "$$(id -u)" -eq 0 || { echo 'ERROR: stop-systemd must run as root (try sudo make stop-systemd)'; exit 1; }
+	systemctl stop super-aio.service
+
+restart-systemd:
+	@if systemctl is-active --quiet super-aio.service; then systemctl restart super-aio.service; else echo 'ERROR: super-aio.service is not active'; exit 1; fi
+
+status-systemd:
 	@systemctl --no-pager --full status super-aio.service
 
 # -----------------------------------------------------------------------------
-# Runtime health check
+# Tests and diagnostics
 # -----------------------------------------------------------------------------
-# Verify that the Super-AIO monitor and its native OSD child are running.
-# Run this target on the Raspberry Pi; it is intentionally read-only.
+.PHONY: check-runtime show-power monitor-power
+
+POWER_DATA ?= $(REPO_DIR)/release/saio/osd/data.ini
+
 check-runtime:
 	@set -eu; \
 	monitor_pid=$$(pgrep -f '/release/saio/saio-osd.py' | head -n 1 || true); \
@@ -71,3 +93,11 @@ check-runtime:
 	fi; \
 	echo "PASS: Super-AIO monitor is running (PID $$monitor_pid)"; \
 	echo "PASS: Super-AIO OSD is running (PID $$osd_pid)"
+
+show-power:
+	@test -f "$(POWER_DATA)" || { echo 'ERROR: OSD data file not found: $(POWER_DATA)'; exit 1; }
+	@awk -F ' *= *' '/^(voltage|current|temperature) *=/ { printf "%s: %s\n", $$1, $$2 }' "$(POWER_DATA)"
+
+monitor-power:
+	@test -f "$(POWER_DATA)" || { echo 'ERROR: OSD data file not found: $(POWER_DATA)'; exit 1; }
+	@while true; do date; awk -F ' *= *' '/^(voltage|current|temperature) *=/ { printf "%s: %s\n", $$1, $$2 }' "$(POWER_DATA)"; echo; sleep 1; done
