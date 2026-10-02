@@ -35,7 +35,7 @@ except ImportError:
   from ConfigParser import ConfigParser  # ver. < 3.0
 
 # Config variables
-bin_dir         = '/home/pi/Super-AIO/release/saio/'
+bin_dir         = os.path.dirname(os.path.abspath(__file__)) + '/'
 ini_data_file   = bin_dir + 'osd/data.ini'
 ini_config_file = bin_dir + 'osd/config.ini'
 osd_path        = bin_dir + 'osd/saio-osd'
