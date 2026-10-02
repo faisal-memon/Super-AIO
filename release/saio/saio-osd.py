@@ -50,6 +50,7 @@ serport = '/dev/ttyACM0'
 
 # Software variables
 settings_shutdown = 1 #Enable ability to shut down system
+loop_interval_seconds = 0.5 #Keep mode and OSD updates responsive
 
 # Setup
 logging.basicConfig(level=logging.DEBUG)
@@ -379,7 +380,7 @@ try:
 
     createINI(volt, 0, temp, debug, wifi, mute, ini_data_file)
     
-    time.sleep(3);
+    time.sleep(loop_interval_seconds)
   
 except KeyboardInterrupt:
   GPIO.cleanup
