@@ -1,5 +1,3 @@
-.PHONY: install systemd-install config-install uninstall systemd-uninstall config-uninstall systemd-start systemd-stop systemd-restart systemd-status check-runtime show-power monitor-power
-
 # Common configuration
 REPO_DIR ?= $(CURDIR)
 CONFIG_BACKUP_DIR ?= /var/backups/super-aio
@@ -8,6 +6,8 @@ POWER_DATA ?= $(REPO_DIR)/release/saio/osd/data.ini
 # -----------------------------------------------------------------------------
 # Install
 # -----------------------------------------------------------------------------
+.PHONY: install systemd-install config-install
+
 install: systemd-install config-install
 	@echo 'Installed Super-AIO systemd integration and boot configuration.'
 
@@ -33,6 +33,8 @@ config-install:
 # -----------------------------------------------------------------------------
 # Uninstall
 # -----------------------------------------------------------------------------
+.PHONY: uninstall systemd-uninstall config-uninstall
+
 uninstall: systemd-uninstall config-uninstall
 	@echo 'Removed Super-AIO systemd integration and restored boot configuration.'
 
@@ -52,6 +54,8 @@ config-uninstall:
 # -----------------------------------------------------------------------------
 # Service lifecycle
 # -----------------------------------------------------------------------------
+.PHONY: systemd-start systemd-stop systemd-restart systemd-status
+
 systemd-start:
 	@test "$$(id -u)" -eq 0 || { echo 'ERROR: systemd-start must run as root (try sudo make systemd-start)'; exit 1; }
 	systemctl start super-aio.service
@@ -69,6 +73,8 @@ systemd-status:
 # -----------------------------------------------------------------------------
 # Tests and diagnostics
 # -----------------------------------------------------------------------------
+.PHONY: check-runtime show-power monitor-power
+
 check-runtime:
 	@set -eu; \
 	monitor_pid=$$(pgrep -f '/release/saio/saio-osd.py' | head -n 1 || true); \
