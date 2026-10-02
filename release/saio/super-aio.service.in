@@ -1,0 +1,15 @@
+[Unit]
+Description=Super-AIO power and OSD monitor
+After=local-fs.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=__REPO_DIR__/release/saio
+ExecStart=/usr/bin/python __REPO_DIR__/release/saio/saio-osd.py
+Restart=on-failure
+RestartSec=5
+KillMode=control-group
+
+[Install]
+WantedBy=multi-user.target
