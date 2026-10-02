@@ -12,6 +12,9 @@ CONFIG_BACKUP_DIR ?= /var/backups/super-aio
 # Shared data file written by the Super-AIO monitor.
 POWER_DATA ?= $(REPO_DIR)/release/saio/osd/data.ini
 
+# -----------------------------------------------------------------------------
+# Top-level orchestration
+# -----------------------------------------------------------------------------
 install: systemd-install config-install
 	@echo 'Installed Super-AIO systemd integration and boot configuration.'
 
@@ -27,7 +30,7 @@ monitor-power:
 	@while true; do date; awk -F ' *= *' '/^(voltage|current|temperature) *=/ { printf "%s: %s\n", $$1, $$2 }' "$(POWER_DATA)"; echo; sleep 1; done
 
 # -----------------------------------------------------------------------------
-# Boot configuration
+# Installation components: boot configuration
 # -----------------------------------------------------------------------------
 config-install:
 	@test "$$(id -u)" -eq 0 || { echo 'ERROR: config-install must run as root (try sudo make config-install)'; exit 1; }
@@ -46,7 +49,7 @@ config-uninstall:
 	@echo 'Restored the backed-up /boot/config-saio.txt.'
 
 # -----------------------------------------------------------------------------
-# systemd runtime management
+# Installation components: systemd service
 # -----------------------------------------------------------------------------
 systemd-install:
 	@test "$$(id -u)" -eq 0 || { echo 'ERROR: systemd-install must run as root (try sudo make systemd-install)'; exit 1; }
@@ -64,6 +67,9 @@ systemd-uninstall:
 	systemctl daemon-reload
 	@echo 'Removed super-aio.service.'
 
+# -----------------------------------------------------------------------------
+# Runtime controls
+# -----------------------------------------------------------------------------
 systemd-restart:
 	@if systemctl is-active --quiet super-aio.service; then systemctl restart super-aio.service; else echo 'ERROR: super-aio.service is not active'; exit 1; fi
 
