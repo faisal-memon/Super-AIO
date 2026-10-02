@@ -1,4 +1,4 @@
-.PHONY: check-runtime install-systemd uninstall-systemd restart-runtime start-runtime stop-runtime status-runtime show-power monitor-power
+.PHONY: check-runtime systemd-install systemd-uninstall systemd-restart systemd-start systemd-stop systemd-status show-power monitor-power
 
 # -----------------------------------------------------------------------------
 # Common configuration
@@ -22,8 +22,8 @@ monitor-power:
 # -----------------------------------------------------------------------------
 # systemd runtime management
 # -----------------------------------------------------------------------------
-install-systemd:
-	@test "$$(id -u)" -eq 0 || { echo 'ERROR: install-systemd must run as root (try sudo make install-systemd)'; exit 1; }
+systemd-install:
+	@test "$$(id -u)" -eq 0 || { echo 'ERROR: systemd-install must run as root (try sudo make systemd-install)'; exit 1; }
 	test -f "$(REPO_DIR)/release/saio/super-aio.service.in" || { echo 'ERROR: service template not found'; exit 1; }
 	sed 's#__REPO_DIR__#$(REPO_DIR)#g' "$(REPO_DIR)/release/saio/super-aio.service.in" > /tmp/super-aio.service
 	install -m 644 /tmp/super-aio.service /etc/systemd/system/super-aio.service
@@ -31,25 +31,25 @@ install-systemd:
 	systemctl daemon-reload
 	@echo 'Installed super-aio.service. Enable it with: sudo systemctl enable --now super-aio.service'
 
-uninstall-systemd:
-	@test "$$(id -u)" -eq 0 || { echo 'ERROR: uninstall-systemd must run as root (try sudo make uninstall-systemd)'; exit 1; }
+systemd-uninstall:
+	@test "$$(id -u)" -eq 0 || { echo 'ERROR: systemd-uninstall must run as root (try sudo make systemd-uninstall)'; exit 1; }
 	systemctl disable --now super-aio.service 2>/dev/null || true
 	rm -f /etc/systemd/system/super-aio.service
 	systemctl daemon-reload
 	@echo 'Removed super-aio.service.'
 
-restart-runtime:
+systemd-restart:
 	@if systemctl is-active --quiet super-aio.service; then systemctl restart super-aio.service; else echo 'ERROR: super-aio.service is not active'; exit 1; fi
 
-stop-runtime:
-	@test "$$(id -u)" -eq 0 || { echo 'ERROR: stop-runtime must run as root (try sudo make stop-runtime)'; exit 1; }
+systemd-stop:
+	@test "$$(id -u)" -eq 0 || { echo 'ERROR: systemd-stop must run as root (try sudo make systemd-stop)'; exit 1; }
 	systemctl stop super-aio.service
 
-start-runtime:
-	@test "$$(id -u)" -eq 0 || { echo 'ERROR: start-runtime must run as root (try sudo make start-runtime)'; exit 1; }
+systemd-start:
+	@test "$$(id -u)" -eq 0 || { echo 'ERROR: systemd-start must run as root (try sudo make systemd-start)'; exit 1; }
 	systemctl start super-aio.service
 
-status-runtime:
+systemd-status:
 	@systemctl --no-pager --full status super-aio.service
 
 # -----------------------------------------------------------------------------
