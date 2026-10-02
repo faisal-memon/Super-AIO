@@ -1,4 +1,4 @@
-.PHONY: check-runtime install-systemd uninstall-systemd restart-runtime status-runtime show-power monitor-power
+.PHONY: check-runtime install-systemd uninstall-systemd restart-runtime stop-runtime status-runtime show-power monitor-power
 
 # -----------------------------------------------------------------------------
 # Common configuration
@@ -40,6 +40,10 @@ uninstall-systemd:
 
 restart-runtime:
 	@if systemctl is-active --quiet super-aio.service; then systemctl restart super-aio.service; else echo 'ERROR: super-aio.service is not active'; exit 1; fi
+
+stop-runtime:
+	@test "$$(id -u)" -eq 0 || { echo 'ERROR: stop-runtime must run as root (try sudo make stop-runtime)'; exit 1; }
+	systemctl stop super-aio.service
 
 status-runtime:
 	@systemctl --no-pager --full status super-aio.service
