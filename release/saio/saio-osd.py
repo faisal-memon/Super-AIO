@@ -150,6 +150,14 @@ class FakeSecHead(object):
     else: 
       return self.fp.readline()
 
+  def __iter__(self):
+    return self
+
+  def next(self):
+    return self.readline()
+
+  __next__ = next
+
 # Set up a settings config file
 configMAIN = ConfigParser()
 if (os.path.isfile(config_file)):
@@ -249,7 +257,7 @@ def readModeWifi():
     else:
       # Get signal strength
       raw = subprocess.check_output([ 'cat', '/proc/net/wireless'] )
-      strengthObj = re.search( r'.wlan0: \d*\s*(\d*)\.\s*[-]?(\d*)\.', raw, re.I )
+      strengthObj = re.search( r'.wlan0: \d*\s*(\d*)\.\s*[-]?(\d*)\.', raw.decode('utf-8'), re.I )
       if strengthObj:
         strength = 0
         if (int(strengthObj.group(1)) > 0):
