@@ -317,10 +317,25 @@ def checkTemperature():
   return temp
 
 # Do a shutdown
+def runNextcloudSync():
+  log_dir = '/home/pi/.local/state/super-aio'
+  log_file = log_dir + '/nextcloud-sync.log'
+  try:
+    if not os.path.isdir(log_dir):
+      os.makedirs(log_dir)
+    with open(log_file, 'a') as sync_log:
+      sync_log.write('%s sync started\n' % time.strftime('%Y-%m-%dT%H:%M:%S'))
+      sync_log.flush()
+      with open(os.devnull, 'w') as sync_output:
+        result = subprocess.call(['/usr/local/bin/nextcloud.sh'], stdout=sync_output, stderr=subprocess.STDOUT)
+      sync_log.write('%s sync finished with exit code %d\n' % (time.strftime('%Y-%m-%dT%H:%M:%S'), result))
+  except Exception as e:
+    logging.exception('Nextcloud sync failed to run')
+
 def doShutdown():
   os.system("sudo killall emulationstation")
   os.system("sudo sleep 3")
-  os.system("/usr/local/bin/nextcloud.sh")
+  runNextcloudSync()
   os.system("sudo shutdown -h now")
   try:
     sys.stdout.close()
