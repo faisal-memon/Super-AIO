@@ -37,7 +37,7 @@ install-nextcloud:
 	test -f "$(REPO_DIR)/release/saio/nextcloud-sync.sh" || { echo 'ERROR: Nextcloud sync script not found'; exit 1; }
 	install -d -m 755 /etc/super-aio
 	install -d -m 755 /usr/local/libexec
-	if [ ! -e /etc/super-aio/nextcloud.conf ]; then install -m 600 "$(REPO_DIR)/release/saio/nextcloud.conf.in" /etc/super-aio/nextcloud.conf; fi
+	if [ ! -e /etc/super-aio/nextcloud.conf ]; then install -o root -g $(TARGET_USER) -m 640 "$(REPO_DIR)/release/saio/nextcloud.conf.in" /etc/super-aio/nextcloud.conf; fi
 	sed 's#__TARGET_USER__#$(TARGET_USER)#g' "$(REPO_DIR)/release/saio/super-aio-nextcloud-startup.service.in" > /tmp/super-aio-nextcloud-startup.service
 	sed 's#__TARGET_USER__#$(TARGET_USER)#g' "$(REPO_DIR)/release/saio/super-aio-nextcloud-shutdown.service.in" > /tmp/super-aio-nextcloud-shutdown.service
 	install -m 755 "$(REPO_DIR)/release/saio/nextcloud-sync.sh" /usr/local/libexec/super-aio-nextcloud-sync
