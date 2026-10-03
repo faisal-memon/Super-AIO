@@ -154,7 +154,10 @@ class FakeSecHead(object):
     return self
 
   def next(self):
-    return self.readline()
+    line = self.readline()
+    if line:
+      return line
+    raise StopIteration
 
   __next__ = next
 
