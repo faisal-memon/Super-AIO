@@ -1,0 +1,14 @@
+[Unit]
+Description=Synchronize Super-AIO game artifacts before shutdown
+DefaultDependencies=no
+After=network-online.target
+Before=shutdown.target reboot.target halt.target poweroff.target
+
+[Service]
+Type=oneshot
+User=__TARGET_USER__
+TimeoutStartSec=10min
+ExecStart=/usr/local/libexec/super-aio-nextcloud-sync
+
+[Install]
+WantedBy=shutdown.target reboot.target halt.target poweroff.target
