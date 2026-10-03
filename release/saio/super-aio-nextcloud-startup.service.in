@@ -7,3 +7,6 @@ After=network-online.target
 Type=oneshot
 User=__TARGET_USER__
 ExecStart=/usr/local/libexec/super-aio-nextcloud-sync
+
+[Install]
+WantedBy=multi-user.target
