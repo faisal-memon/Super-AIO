@@ -235,6 +235,13 @@ def readModeDebug():
   logging.info("Info    [" + str(debugVal) + "]")
   return debugVal
 
+# Read battery/Wi-Fi status visibility
+def readModeStatus():
+  ser.write(b'q')
+  statusVal = int(ser.readline().decode('utf-8').rstrip('\r\n'))
+  logging.info("Status  [" + str(statusVal) + "]")
+  return statusVal
+
 # Read wifi
 def readModeWifi():
   ret = wifi_off
@@ -389,7 +396,8 @@ try:
     curr = readCurrent()
     temp = checkTemperature()
     debug = readModeDebug()
-    wifi = readModeWifi()
+    status = readModeStatus()
+    wifi = readModeWifi() if status else wifi_off
     mute = readModeMute()    
 
     createINI(volt, curr, temp, debug, wifi, mute, ini_data_file)

@@ -180,6 +180,11 @@ void setInfo(bool val) {
   eepromWrite();
 }
 
+void setStatus(bool val) {
+  cfg.status_val = val ? 1 : 0;
+  eepromWrite();
+}
+
 //--------------------------------------------------------------------------------------
 // Check EEPROM is ok and read contents
 void eepromCheck() {
@@ -208,4 +213,3 @@ void eepromRead() {
     *((char*)&cfg + t) = EEPROM.read(EEPROM_START + t);
   }
 }
-

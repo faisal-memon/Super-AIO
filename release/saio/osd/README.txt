@@ -11,6 +11,11 @@ ini file for config : An INI file that contains the configuration data
 
 It is recommended to run this as a background job.
 
+The native OSD binary currently supports debug, Wi-Fi, and mute visibility
+fields. It does not expose a separate battery-visibility field, so battery
+hide/show requires rebuilding the native OSD rather than changing the Python
+monitor alone.
+
 Once running, make changes to the 'ini file for data' by editing/replacing with fresh data, then send a SIGUSR1 to the process:
 
 kill -s SIGUSR1 <PID>

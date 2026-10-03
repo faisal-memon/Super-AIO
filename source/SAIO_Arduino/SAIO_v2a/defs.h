@@ -80,7 +80,7 @@
 #define BL_DOWN 1
 
 // EEPROM
-#define EEPROM_VERSION 5
+#define EEPROM_VERSION 6
 #define EEPROM_START   0
 
 // MISC
@@ -107,4 +107,3 @@
 #define STATUS_WIFI    1
 #define STATUS_AUD     2
 #define STATUS_INFO    3
-
