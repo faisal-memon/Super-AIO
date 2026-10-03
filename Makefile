@@ -6,12 +6,12 @@ REPO_DIR ?= $(CURDIR)
 # -----------------------------------------------------------------------------
 # Install
 # -----------------------------------------------------------------------------
-.PHONY: install install-systemd install-config
+.PHONY: install install-systemd install-config install-nextcloud
 
 CONFIG_BACKUP_DIR ?= /var/backups/super-aio
 
-install: install-systemd install-config
-	@echo 'Installed Super-AIO systemd integration and boot configuration.'
+install: install-systemd install-config install-nextcloud
+	@echo 'Installed Super-AIO systemd, boot, and Nextcloud integration.'
 
 install-systemd:
 	@test "$$(id -u)" -eq 0 || { echo 'ERROR: install-systemd must run as root (try sudo make install-systemd)'; exit 1; }
@@ -32,13 +32,28 @@ install-config:
 	rm -f /tmp/config-saio.txt
 	@echo 'Installed /boot/config-saio.txt from the repository template.'
 
+install-nextcloud:
+	@test "$$(id -u)" -eq 0 || { echo 'ERROR: install-nextcloud must run as root (try sudo make install-nextcloud)'; exit 1; }
+	test -f "$(REPO_DIR)/release/saio/nextcloud-sync.sh" || { echo 'ERROR: Nextcloud sync script not found'; exit 1; }
+	install -d -m 755 /etc/super-aio
+	if [ ! -e /etc/super-aio/nextcloud.conf ]; then install -m 600 "$(REPO_DIR)/release/saio/nextcloud.conf.in" /etc/super-aio/nextcloud.conf; fi
+	sed 's#__TARGET_USER__#$(TARGET_USER)#g' "$(REPO_DIR)/release/saio/super-aio-nextcloud-startup.service.in" > /tmp/super-aio-nextcloud-startup.service
+	sed 's#__TARGET_USER__#$(TARGET_USER)#g' "$(REPO_DIR)/release/saio/super-aio-nextcloud-shutdown.service.in" > /tmp/super-aio-nextcloud-shutdown.service
+	install -m 755 "$(REPO_DIR)/release/saio/nextcloud-sync.sh" /usr/local/libexec/super-aio-nextcloud-sync
+	install -m 644 /tmp/super-aio-nextcloud-startup.service /etc/systemd/system/super-aio-nextcloud-startup.service
+	install -m 644 /tmp/super-aio-nextcloud-shutdown.service /etc/systemd/system/super-aio-nextcloud-shutdown.service
+	rm -f /tmp/super-aio-nextcloud-startup.service /tmp/super-aio-nextcloud-shutdown.service
+	systemctl daemon-reload
+	systemctl enable super-aio-nextcloud-startup.service super-aio-nextcloud-shutdown.service
+	@echo 'Installed Nextcloud services. Edit /etc/super-aio/nextcloud.conf, then run: sudo make start-nextcloud'
+
 # -----------------------------------------------------------------------------
 # Uninstall
 # -----------------------------------------------------------------------------
-.PHONY: uninstall uninstall-systemd uninstall-config
+.PHONY: uninstall uninstall-systemd uninstall-config uninstall-nextcloud
 
-uninstall: uninstall-systemd uninstall-config
-	@echo 'Removed Super-AIO systemd integration and restored boot configuration.'
+uninstall: uninstall-systemd uninstall-config uninstall-nextcloud
+	@echo 'Removed Super-AIO systemd, boot, and Nextcloud integration.'
 
 uninstall-systemd:
 	@test "$$(id -u)" -eq 0 || { echo 'ERROR: uninstall-systemd must run as root (try sudo make uninstall-systemd)'; exit 1; }
@@ -52,6 +67,13 @@ uninstall-config:
 	@test -f "$(CONFIG_BACKUP_DIR)/config-saio.txt" || { echo 'ERROR: no backed-up config-saio.txt found'; exit 1; }
 	install -m 644 "$(CONFIG_BACKUP_DIR)/config-saio.txt" /boot/config-saio.txt
 	@echo 'Restored the backed-up /boot/config-saio.txt.'
+
+uninstall-nextcloud:
+	@test "$$(id -u)" -eq 0 || { echo 'ERROR: uninstall-nextcloud must run as root (try sudo make uninstall-nextcloud)'; exit 1; }
+	systemctl disable --now super-aio-nextcloud-startup.service super-aio-nextcloud-shutdown.service 2>/dev/null || true
+	rm -f /etc/systemd/system/super-aio-nextcloud-startup.service /etc/systemd/system/super-aio-nextcloud-shutdown.service /usr/local/libexec/super-aio-nextcloud-sync
+	systemctl daemon-reload
+	@echo 'Removed Nextcloud services. Preserved /etc/super-aio/nextcloud.conf.'
 
 # -----------------------------------------------------------------------------
 # Migration cleanup
@@ -70,7 +92,7 @@ remove-cron:
 # -----------------------------------------------------------------------------
 # Service lifecycle
 # -----------------------------------------------------------------------------
-.PHONY: start-systemd stop-systemd restart-systemd status-systemd
+.PHONY: start-systemd stop-systemd restart-systemd status-systemd start-nextcloud stop-nextcloud status-nextcloud logs-nextcloud
 
 start-systemd:
 	@test "$$(id -u)" -eq 0 || { echo 'ERROR: start-systemd must run as root (try sudo make start-systemd)'; exit 1; }
@@ -85,6 +107,20 @@ restart-systemd:
 
 status-systemd:
 	@systemctl --no-pager --full status super-aio.service
+
+start-nextcloud:
+	@test "$$(id -u)" -eq 0 || { echo 'ERROR: start-nextcloud must run as root (try sudo make start-nextcloud)'; exit 1; }
+	systemctl start super-aio-nextcloud-startup.service
+
+stop-nextcloud:
+	@test "$$(id -u)" -eq 0 || { echo 'ERROR: stop-nextcloud must run as root (try sudo make stop-nextcloud)'; exit 1; }
+	systemctl stop super-aio-nextcloud-startup.service
+
+status-nextcloud:
+	@systemctl --no-pager --full status super-aio-nextcloud-startup.service super-aio-nextcloud-shutdown.service
+
+logs-nextcloud:
+	@journalctl --no-pager -u super-aio-nextcloud-startup.service -u super-aio-nextcloud-shutdown.service
 
 # -----------------------------------------------------------------------------
 # Tests and diagnostics

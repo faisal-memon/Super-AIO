@@ -1,0 +1,3 @@
+# Local Nextcloud settings. Do not commit real server URLs or credentials.
+NEXTCLOUD_URL='https://replace-with-your-nextcloud.example/remote.php/webdav/Games'
+NEXTCLOUD_ROOT='/home/pi/RetroPie/roms'

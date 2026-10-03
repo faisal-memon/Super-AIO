@@ -1,0 +1,9 @@
+[Unit]
+Description=Synchronize Super-AIO games from Nextcloud
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=__TARGET_USER__
+ExecStart=/usr/local/libexec/super-aio-nextcloud-sync
