@@ -58,8 +58,8 @@
   * A          | WIFI ON
   * X          | AUDIO AMP OFF
   * Y          | AUDIO AMP ON
-  * START      | INFO MODE ON
-  * SELECT     | INFO MODE OFF
+  * START      | STATUS DISPLAY TOGGLE
+  * SELECT     | INFO DISPLAY TOGGLE
   * 
   */
 
@@ -79,6 +79,7 @@ struct Config {
   uint8_t wifi_val = 1;
   uint8_t aud_val  = 1;
   uint8_t info_val = 0;
+  uint8_t status_val = 1;
   // Joystick settings
   int16_t xmid1 = 0;
   int16_t ymid1 = 0;
@@ -168,6 +169,7 @@ void setup() {
   setWifi(cfg.wifi_val);
   setAud(cfg.aud_val);
   setInfo(cfg.info_val);
+  setStatus(cfg.status_val);
 
   // Set up I2C
   Wire.begin(); // wake up I2C bus
@@ -282,6 +284,10 @@ void processSerial() {
       case 'i': //is info (0-1)
         Serial.print(cfg.info_val);
         break;
+
+      case 'q': //is status display enabled (0-1)
+        Serial.print(cfg.status_val);
+        break;
         
       case 'I': //set info (I0-1)
         if (Serial.available() == 1) {
@@ -291,6 +297,16 @@ void processSerial() {
           } else {
             setInfo(0);
           }
+          Serial.print('1');
+        } else {
+          Serial.print('?');
+        }
+        break;
+
+      case 'Q': //set status display (Q0-1)
+        if (Serial.available() == 1) {
+          tmp = Serial.read();
+          setStatus(tmp == '1');
           Serial.print('1');
         } else {
           Serial.print('?');
@@ -390,4 +406,3 @@ void processSerial() {
     }
   }
 }
-

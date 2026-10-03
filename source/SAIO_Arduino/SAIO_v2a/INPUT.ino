@@ -318,10 +318,10 @@ void setModes() {
       setAud(0);
     }
     if (btns[B_START]) {
-      setInfo(1);
+      setStatus(!cfg.status_val);
     }
     if (btns[B_SELECT]) {
-      setInfo(0);
+      setInfo(!cfg.info_val);
     }
 
 #ifdef DEBUG
@@ -575,4 +575,3 @@ void calibrateJoystick() {
   cfg.dz = DEADZONE;
   eepromWrite();
 }
-
