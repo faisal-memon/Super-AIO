@@ -243,7 +243,7 @@ def readModeWifi():
         logging.info("Wifi    [" + str(out) + "]")
         out = subprocess.check_output([ 'sudo', rfkill_path, 'unblock', 'bluetooth' ])
         logging.info("BT      [" + str(out) + "]")
-      except Exception, e:
+      except Exception as e:
         logging.info("Wifi    : " + str(e.output))
       ret = wifi_warning
     else:
@@ -277,7 +277,7 @@ def readModeWifi():
         logging.info("Wifi    [" + str(out) + "]")
         out = subprocess.check_output([ 'sudo', rfkill_path, 'block', 'bluetooth' ])
         logging.info("BT      [" + str(out) + "]")
-      except Exception, e:
+      except Exception as e:
         logging.info("Wifi    : " + str(e.output))
       ret = wifi_error
   
